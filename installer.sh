@@ -4,11 +4,6 @@
 
 set -e
 
-echo "=================================="
-echo "        🚀 Prime Installer"
-echo "=================================="
-echo ""
-
 # Detect package manager
 detect_pm() {
     if [[ "$(uname -s)" == "Darwin" ]]; then
@@ -27,9 +22,7 @@ detect_pm() {
 }
 PM=$(detect_pm)
 
-# -------------------------------
 # Node.js Installer
-# -------------------------------
 install_node() {
     echo "➡️ Installing Node.js..."
     if [[ "$PM" == "apt" ]]; then
@@ -51,9 +44,7 @@ install_node() {
     npm -v
 }
 
-# -------------------------------
-# ipv4 (web) Installer / Start
-# -------------------------------
+# ipv4 (web) Module
 ipv4_web() {
     echo ""
     echo "=================================="
@@ -64,70 +55,64 @@ ipv4_web() {
     echo "1) Installer"
     echo "2) Start"
     echo ""
-    read -rp "Enter choice [1-2]: " TYPE
 
-    if [[ "$TYPE" == "2" ]] || [[ "$TYPE" =~ [Ss]tart ]]; then
-        echo "➡️ Starting Playit agent..."
-        echo "⚠️ Press Ctrl + C after ~10s to use your VPS"
-        sleep 2
-        ./playit-linux-amd64
-        return
-    fi
+    while true; do
+        read -rp "Enter choice [1-2]: " TYPE || true
 
-    if [[ "$TYPE" == "1" ]] || [[ "$TYPE" =~ [Ii]nstaller ]]; then
-        echo ""
-        read -rp "Enter port you want to forward (default: 22): " PORT
-        PORT=${PORT:-22}
+        if [[ "$TYPE" == "2" ]]; then
+            echo "➡️ Starting Playit agent..."
+            echo "⚠️ Press Ctrl + C after ~10s to use your VPS"
+            sleep 2
+            ./playit-linux-amd64
+            break
+        elif [[ "$TYPE" == "1" ]]; then
+            read -rp "Enter port you want to forward (default: 22): " PORT
+            PORT=${PORT:-22}
 
-        echo ""
-        echo "📢 You must have a Playit account and configure this tunnel as TCP/UDP port forwarding."
-        echo "📺 To understand properly, watch my YouTube tutorial."
-        echo "⚠️ If your VPS restarts, run this script again and choose 'Start'."
-        sleep 5
+            echo ""
+            echo "📢 You must have a Playit account and configure this tunnel as TCP/UDP port forwarding."
+            echo "📺 Watch my YouTube tutorial if you need help."
+            echo "⚠️ If your VPS restarts, run this script again and choose 'Start'."
+            sleep 5
 
-        echo "➡️ Updating system..."
-        sudo apt update -y
+            sudo apt update -y
+            sudo apt install wget -y
 
-        echo "➡️ Installing wget..."
-        sudo apt install wget -y
+            wget -q https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-amd64
+            chmod +x playit-linux-amd64
 
-        echo "➡️ Downloading Playit agent..."
-        wget -q https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-amd64
+            sudo apt install dropbear -y
+            sudo dropbear -p "$PORT"
 
-        echo "➡️ Making Playit agent executable..."
-        chmod +x playit-linux-amd64
-
-        echo "➡️ Installing Dropbear (SSH server)..."
-        sudo apt install dropbear -y
-
-        echo "➡️ Starting Dropbear on port $PORT"
-        sudo dropbear -p "$PORT"
-
-        echo ""
-        echo "✅ ipv4 (web) installation complete!"
-        echo "Run this script again and choose 'Start' to launch Playit."
-        return
-    fi
-
-    echo "❌ Invalid choice."
+            echo "✅ ipv4 (web) installation complete!"
+            break
+        else
+            echo "❌ Invalid choice, try again."
+        fi
+    done
 }
 
 # -------------------------------
-# Main Menu
+# Main Menu Loop
 # -------------------------------
 while true; do
+    echo ""
+    echo "=================================="
+    echo "        🚀 Prime Installer"
+    echo "=================================="
     echo ""
     echo "📦 Select an option:"
     echo "1) Node.js Installer"
     echo "2) ipv4 (web)"
     echo "3) Exit"
     echo ""
-    read -rp "Enter choice [1-3]: " choice
+
+    read -rp "Enter choice [1-3]: " choice || true
 
     case $choice in
         1) install_node ;;
         2) ipv4_web ;;
         3) echo "👋 Exiting Prime Installer. Bye!"; exit 0 ;;
-        *) echo "❌ Invalid choice." ;;
+        *) echo "❌ Invalid choice. Please try again." ;;
     esac
 done
